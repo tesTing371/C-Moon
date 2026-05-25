@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>新月集 - 心得與評論</title>
+    <style>
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background-color: #1a3318; font-family: "PingFang TC", "STKaiti", serif; }
+        
+        #header { position: absolute; top: 20px; left: 20px; z-index: 10; color: white; pointer-events: none; }
+        h1 { font-weight: 300; letter-spacing: 3px; margin: 0; font-size: 1.8rem; text-shadow: 2px 2px 10px rgba(0,0,0,0.5); }
+        #signature { position: absolute; bottom: 15px; right: 15px; color: rgba(255,255,255,0.4); font-size: 0.75rem; z-index: 10; }
+
+        /* 模擬舊紙張樣式 */
+        #paper-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            display: none; justify-content: center; align-items: center;
+            z-index: 100; background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+        }
+
+        #old-paper {
+            width: 90%; max-width: 600px; height: 80vh;
+            background: #f4efdf; position: relative;
+            box-shadow: 10px 10px 30px rgba(0,0,0,0.5);
+            display: flex; flex-direction: column;
+            clip-path: polygon(
+                2% 2%, 15% 0%, 35% 2%, 55% 0%, 75% 3%, 98% 1%, 
+                100% 20%, 97% 45%, 100% 75%, 98% 98%, 
+                75% 97%, 50% 100%, 25% 98%, 2% 99%, 
+                0% 75%, 3% 50%, 0% 25%
+            );
+            background-image: 
+                radial-gradient(circle at 50% 50%, rgba(255,255,255,0.2) 0%, transparent 80%),
+                linear-gradient(135deg, transparent 45%, rgba(0,0,0,0.05) 50%, transparent 55%);
+        }
+
+        #paper-content {
+            flex: 1; padding: 45px 25px; overflow-y: auto; z-index: 1;
+            scrollbar-width: thin; scrollbar-color: #8b4513 transparent;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        #comment-title { 
+            color: #4a3728; font-size: 1.4rem; margin-bottom: 15px; font-weight: bold; 
+            border-bottom: 2px solid rgba(139, 69, 19, 0.2); padding-bottom: 10px; 
+            text-align: center; font-family: "STKaiti", serif;
+        }
+        #comment-text { 
+            color: #3e2723; line-height: 2.0; white-space: pre-wrap; 
+            font-size: 1.05rem; text-align: justify; 
+        }
+        
+        #close-btn {
+            background: rgba(139, 69, 19, 0.85); color: white; padding: 16px; 
+            text-align: center; cursor: pointer; border: none; font-size: 0.95rem;
+            letter-spacing: 2px; transition: 0.3s; font-weight: bold;
+            -webkit-tap-highlight-color: transparent;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="header">
+        <h1>新月集</h1>
+        <div style="opacity: 0.7; font-size: 0.85rem;">心得與評論</div>
+    </div>
+
+    <div id="signature">作者：吳則燁</div>
+
+    <div id="paper-overlay">
+        <div id="old-paper">
+            <div id="paper-content">
+                <div id="comment-title"></div>
+                <div id="comment-text"></div>
+            </div>
+            <button id="close-btn" onclick="closeOverlay()">讓紙船繼續漂流</button>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+    <script>
+        let boats = [];
+        let flowers = [];
+        let sparkles = [];
+        let grassPatches = [];
+        let wildGrasses = [];
+        let isMobileDevice = false;
+        let currentPool = [];
+
+        const fullComments = [
+            { title: "1. 〈家庭〉", content: `這篇以旁觀者的視角去描寫日暮時分孩子回家的景象，陽光收拾而去，逐漸冷卻的大地是如何和諧。\n\n只不過，我有比較在意的地方，第一次閱讀我以為這個角度僅僅是寫下所見，並沒有過多留意文中的「我」，反而是被男孩一詞攫獲注意，男孩尖銳的歌聲，或許是玩太晚忽然驚覺置身黑夜，又擔心回家後面臨責備而高歌壯膽，也有可能，他單純玩的盡興，又想到餐桌上熱騰騰的菜餚而滿足的歌唱，無論如何，從「我」的角度來說，這顯然是令人羨慕而對方卻忘然不自知這種隨處可見的幸福。\n\n所以我好奇「我」到底是怎麼樣的存在？第二次閱讀時，我把「我」當成眾多被男孩涵蓋或舉例的小孩之一，卻發現不同，「我」細緻的觀察男孩的動向，描述了男孩的家，卻沒寫「我」要去哪，從第一句以及最後一段開頭：「我獨自橫跨......」、「我在星空下獨自走著......」了解到「我」是沒有歸處的，於是哀嘆回家的男孩與守望的母親，皆不知這種普通的得來不易，不知道它的價值。\n\n這篇我認為是從某個失去依靠的孩子的角度出發，描寫男孩的步伐不假思索走回家，自己卻只能短暫停留星光下，旋即又要出發的戒慎，以一人去面對黑沉沉的大地，沒有等著他的人，也沒有燈，〈家庭〉這標題將主視角排除在外，就像太陽將他留在黑夜中。` },
+            { title: "2. 〈海邊〉", content: `粗暴的總結一下這首詩，世界之大，孩子卻只願嬉戲而非圖利，有別於濫採自然資源的大人，泰戈爾所寫「採珠的人為了珠潛水，商人在他們的船上航行，孩子們卻只把小圓石聚了又散。他們不搜求寶藏，他們不知道怎麼撒網。」可以見得，孩子們所做所為都只是為了快樂，而不是販售珍珠或魚，因為他們不知道怎麼撒網。\n\n除了透過對比描寫孩子的質樸單純，泰戈爾反覆使用「孩子們在無邊無際的世界的海邊。」卻只是聚集在海邊一隅，相反的，大人們卻拼命往海外跑，渾然不知自己即將面對危險，大海一邊為孩子們唱著搖籃曲，一邊為那些貪婪的大人準備著死，這首詩在後半寫道沉碎、狂風暴雨的死的隱喻，卻「無轍跡」，所以孩子們不會看見致人死命的波濤，他們依然專注在堆沙堡。\n\n某種意義上來說，這些孩子才是成熟的，他們無知，所以知止，停留在海邊，不對海水做過多的涉足，他們知道真正的寶藏在自己的手中。` },
+            { title: "3. 〈來源〉", content: `這篇透過孩子的睡眠、微笑、新鮮生氣，反向描寫母親，第一段有句讀來很詭異的句子，我嘗試理解後，解讀出了一些可能，原句：「是的，有個謠傳，說它是住在螢火蟲朦朧的照著的林蔭裡的仙村裡，在那個地方，掛著兩個迷人的羞怯的蓓蕾。」坦白說我的思緒在這邊跟不上視線了，不知是譯文拗口，還是原文如此。\n\n後來我想到，如果孩子也包含嬰兒，那麼仙村就可以解釋為母親的懷抱，蓓蕾就是女性性徵，後面寫道：「它就是從那個地方來吻孩子的兩眼的。」就不單純是睡眠，也包含母性帶來的安穩。\n\n孩子睡時的微笑，則是即將離去的新月，並且帶著這彎新月迎接早晨與露水，不受威脅就是整夜的守護，而浸浴露水的早晨或許事母親在哺乳。\n\n最後「甜蜜柔嫩的新鮮生氣」潛伏而綻放，源自母親少女時的心中，那份愛的溫柔與神秘，有意思的是，少女長大成為母親，她的新鮮生氣卻保留給了懷中的孩子，除了顯著的溫柔，愛的神秘或許就是「愛」本身的傳承，母親也曾在懷中安穩的睡著。` },
+            { title: "4. 〈孩童之道〉", content: `孩童放棄一切，就為來到媽媽身邊。我自己用一句話作結，筆下的想像，寫出孩童原本在一個自由，有無盡財寶的樂土，自己也能說出很多聰明話，張翅騰飛，但是為了獲得媽媽的憐愛，他們放棄了所有，化作乞丐墜落，如此脆弱，自然不能離開母親的保護，一切都需要重新開始。\n\n這篇最有趣的地方莫過於孩子選擇了父母，我們或許常常聽到，或抱怨無法選擇自己的親生父母，在泰戈爾筆下，孩子才是那個甘願放棄一切來到母親懷中的天使／乞丐。\n\n他不需要真理，只需要聽懂媽媽在說什麼；學會了哭泣，就能得到媽媽的安哄；黃金與珠子，都比不上母愛的誠摯與慷慨；這場買賣，孩子只需要微笑，母親便滿足了，泰戈爾於是稱作「雙重約束的帶子」，可能是抽象的比喻，一種難以抹滅、互相選擇的關係，或者是臍帶——最最根本的母子連結。` },
+            { title: "5. 〈不被注意的花飾〉", content: `首先我注意到的是視角轉換，文中「我的孩子」以及「我的小小的命芽兒」，讓我下意識的以為是母親，可後文寫在「媽媽」一詞之後的動作，卻是用「她」這個第三人稱代名詞，也就是說對孩子玩鬧而歡喜的「我」，既是孩子的直系親屬，又不是母親，那麼是否有可能是父親呢？之所以會特別關注敘事角度，是因為《新月集》當中有非常多文章以「母子」與「母愛」為題，如果這篇真是以父親的角度去寫母愛，那是相當珍貴的。\n\n前幾段描述孩子的玩鬧以及母親在近處守望，文中又以乞丐稱呼孩子，其實是很有趣的想像，就在〈孩童之道〉有展開解釋；比較抽象的是最後兩段，反覆的句子「風高興的帶走了你踝鈴的叮當」以及「仙鄉裡的夢婆飛過朦朧的天空，向你飛來」，可以是很直觀的風吹鈴響以及做夢，可如果連結〈來源〉，仙鄉或許就是仙村，是母親的懷抱，是安穩與陪伴，所以才能無憂無慮做夢。\n\n比較難以理解的是倒數第二句：「他，向星星奏樂的人，正拿著他的橫笛，站在你的窗邊。」這個他顯然不是作為講述者的「我」，或已然入睡的孩子或母親，他是一個意象，還是鳥鳴與牠長長的喙？不得而知，不過若真是鳥，那麼「高興的飛過孩子身旁」就不見得是風了，鈴聲也可能是指鳥鳴。\n\n最後，最關鍵的疑問，什麼是花飾？題名〈不被注意的花飾〉，卻全文都沒有提到花飾，我從一個角度發現可能的答案，若是這篇文章和〈來源〉有關（「我」這位父親與母親同為孩子的來源），合併來看便是答案，〈不被注意的花飾〉前幾段寫孩子的身軀穿上了小紅衫，可能真的是衣服，也可能是被曬紅的，那個情境孩子正在「玩」，而〈來源〉最後寫：「甜蜜柔嫩的新鮮生氣，像花一般在孩子的四肢上開放著。」\n\n由此我們可以知道，被忽略的花飾，是太陽留給孩子的曬痕，是曬痕體現出來的「生氣」。` },
+            { title: "6. 〈偷睡眠者〉", content: `本篇寫孩子玩鬧後小憩，母親藉機去汲水，回來卻發現孩子提前醒過來，於是猜想著是否孩子的睡眠被偷走了，勢必要奪回來。\n\n時間是正午，並沒有讀出想像中的炎熱，牧童在樹下歇息、鴨子在水中而不泛起漣漪、或白鶴靜立，都讓整篇文章的溫度冷卻不少，後面對於「偷睡眠者」的想像更是有如墜入童話，傳聞印度的醉花一聞即醉，醉花林濃厚而朦朧的香氣與睡意，或許便是偷睡眠者積放贓物所致。\n\n文章後面，母親陪在孩子身邊，充盈的安全感讓孩子可以放心睡著，自然不會有可乘之機，又或是母親陪著孩子一起睡著，去那醉花林中尋找失竊的睡眠了。` },
+            { title: "7. 〈開始〉", content: `孩子好奇的探求自己的存在，母親則以自己的生命成長經驗作為回答。孩子曾是心願，一個遙遠的、不確定能否實現的心願，在另一個孩子的心中孕育著；母親小時候玩的泥像，形塑與重組，那時玩的扮家家酒是種娛樂，也或許是種潛意識追尋的想像透過手邊泥土實踐，一切都很自然；祭拜家庭守護神，也被當作是對孩子的虔誠，孩子就是來保護這個家庭的神明輕輕墜落到人間；孩子早就存在於母親的愛情與希望之中，而母親，也早就在她母親的愛情與希望中孕育，一對孩子與母親，不是單向傳承，而是幾近無限的長線中被他們證明的其中一段，往後的孩子們、往前的母親們生命都是彼此共存；孩子在不死的精靈膝上養育好多年代，長壽而生生不息，說明孩子的誕生不是偶然，而是一場漫長細心的接力，是橫跨時空的形塑與重組；母親少女時，心中的花一開，孩子就像花香一樣遲早會到來，是少女下定決定誠為母親，將孩子帶到人間的宣告；又如太陽出現前的曙光，母親或許就是孩子的預兆，是太陽登場前匆忙清掃星星的白光。\n\n如此高貴的上天寵兒，此刻在母親懷中笑著、嬉鬧著，凝視著孩子的母親彷彿獲得世間渡讓的珍寶，她緊緊抱著，由衷感謝孩子的到來，在這首詩中，我充分感受到一位母親面對孩子到來的喜悅，也為泰戈爾用各種抽象句子展現母愛的技術感到不可思議和佩服。` },
+            { title: "8. 〈孩子的世界〉", content: `孩子的到來不只是讓母親感到驚喜，這份喜悅將會是所有見證者共享，星星守著他的夢，天空布置雲朵彩虹，在孩子仍然無法縱情感知這個世界的同時，它已經張開雙臂迎接，已經長大的孩子們面對新來的同伴也表現出同等熱情，在這個大大的嬰兒床裡，所有的愛都聚集到小小的嬰兒床旁邊。\n\n有趣的是母親反而吃醋了，她覺得自己的愛不特別了，當世界為這個孩子的到來由衷感到歡喜時，獨屬於她作為母親的喜悅便普及，那麼孩子感受到的愛便是無窮、到處可見，那麼她在孩子心中的獨特的位置便動搖了、孩子不見得會依賴她了，這時候的母親彷彿便回爭寵的孩子，暗自許願希望自己能在孩子心中能有常駐的位置，希望這個位置能讓她自由悠遊孩子心中，不被束縛，這份束縛或可看作孩子對母親與世界給與的愛的比較。\n\n自由的使者不為說服誰而奔走，沒有歷史的一眾王國自然也無以誕生仇恨，在這個孩子心中的小世界裡，可以暫且退還理智，不去計較事實，一切都是剛誕生而未成形的無限可能當中，母親悄悄的寄放了一個願望，是她對孩子的佔有慾，是兩個孩子的私心和任性。` },
+            { title: "9. 〈時候與原因〉", content: `一位母親藉由和孩子同樂重新認識這個世界的美好，各種顏色的玩具到孩子手中時，她必然是希望孩子快樂，能夠喜歡這份色彩，或許是看到孩子對於玩具的驚喜，她想起了看過的雲和水，花朵的絢爛，是同樣的感動。\n\n當她唱歌，音律流轉，孩子乘歌起舞，步伐彷彿喚醒了大地的心跳，樹葉也飄出聲調，海浪合唱，在母親的眼裡，整個以孩子為中心開始了一場盛大的演出，自然既是舞台也是伴奏，所有的細微聲響在此刻是和諧的，都讓孩子更加耀眼，本該沉浸在母子兩人的世界中，母親連同外界一起感知，邀請所有的世界加入舞會，也包含她自己的世界，一場由生命經驗和重新感受所構成的舞會，是日常中默默被標記的回味。\n\n糖果的甜味，討孩子歡心，孩子喜歡，所以一切甜蜜都有了意義，花產蜜，或是水果汁，都是未來可以讓孩子開心地備選，對於甜味的聯想，母親似乎還想讓孩子嘗試更多，藉著順應孩子的貪婪，讓他品嘗更多美味。\n\n母親的親吻不只是愛意的體現，是種安全的象徵，母親就在觸手可及的地方，就在能夠回應的地方，所以母親希望孩子是自然舒展的、放鬆的，對世界或剛才那個吻充滿好奇和期待的，所以她也像孩子一樣，向孩子所求回應：「笑一個。」，孩子的笑容就像是晨光捎來初動的活力，以及夏風的清涼愜意。\n\n時候與原因，分別代表著每一段落前後兩次重複的句子，母親給玩具、唱歌、給糖果、親吻，執行 these 動作的時候，她意識到了孩子帶來的本身以外的美好，這同時是原因，孩子的索求就是與世界的聯繫，也是她與世界的再次聯繫。` },
+            { title: "10. 〈責備〉", content: `在母親的眼中，孩子的表現往往是純粹的，她能夠輕易找到最可愛的角度去詮釋孩子的行為是基於什麼原因，並不像其他人將行為當作評判的標準。\n\n換句話說，其他人更重於表面，孩子做了什麼，母親則是能夠一眼看穿，孩子為什麼做，這個差異在本篇有很好的體現，孩子寫字時墨水沾上臉和手，而被責備，然而母親看著孩子骯髒的臉，只想到圓圓的月亮，帶點黑夜的雲朵；嬉鬧時勾破的衣服，也像殘破雲衣中展露笑容的秋陽，那樣不受拘束，自由而充滿生機。\n\n最後一段寫到受與授，孩子求索糖果，在其他人看來過於貪婪，母親則是解讀為「自己對孩子的喜愛」，認知翻轉，立場也就不一樣了，本來是孩子有求於母親，變成母親主動獻給孩子，孩子求的是糖果，母親給出去的卻飽含愛，這是能夠將責備化為寵溺的魔力，也是母愛一詞的體現之一。` }
+        ];
+
+        const boatColors = ['#E53935', '#FB8C00', '#FDD835', '#43A047', '#00ACC1', '#1E88E5', '#8E24AA', '#D81B60', '#FFFFFF', '#90A4AE'];
+
+        function generateShuffledIds() {
+            let arr = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+            for (let i = arr.length - 1; i > 0; i--) {
+                let j = floor(random(i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return arr;
+        }
+
+        function getNextCommentId() {
+            if (currentPool.length === 0) {
+                currentPool = generateShuffledIds();
+            }
+            return currentPool.pop();
+        }
+
+        function setup() {
+            createCanvas(windowWidth, windowHeight);
+            isMobileDevice = width < 768;
+
+            let patchCount = isMobileDevice ? 45 : 110;
+            let flowerCount = isMobileDevice ? 100 : 280;
+            let grassCount = isMobileDevice ? 120 : 350;
+            let sparkleCount = isMobileDevice ? 20 : 50;
+
+            for(let i=0; i<patchCount; i++) grassPatches.push(new GrassPatch());
+            
+            let attempts = 0;
+            let minDistance = isMobileDevice ? 16 : 24;
+            while(flowers.length < flowerCount && attempts < 1500) {
+                let candidate = new Flower();
+                let rx = getRiverX(candidate.y);
+                if(abs(candidate.x - rx) < width * 0.11) { attempts++; continue; }
+                
+                let overlapping = false;
+                for(let f of flowers) {
+                    if(dist(candidate.x, candidate.y, f.x, f.y) < minDistance) { overlapping = true; break; }
+                }
+                if(!overlapping) flowers.push(candidate);
+                attempts++;
+            }
+
+            for(let i=0; i<grassCount; i++) {
+                let gx = random(width); let gy = random(height);
+                let rx = getRiverX(gy);
+                if(abs(gx - rx) > width * 0.10) {
+                    wildGrasses.push(new WildGrass(gx, gy));
+                }
+            }
+
+            for(let i=0; i<sparkleCount; i++) sparkles.push(new Sparkle());
+            
+            // 初始序列：拉大間隔步伐（0.45），確保剛載入時也完美錯開不重疊
+            let initialSequence = generateShuffledIds();
+            for(let i=0; i<10; i++) {
+                let id = initialSequence[i];
+                boats.push(new Boat(id, boatColors[id], -i * 0.45 - random(0.05, 0.15)));
+            }
+        }
+
+        function draw() {
+            background(22, 48, 18);
+            for(let p of grassPatches) p.show();
+            for(let wg of wildGrasses) { wg.update(); wg.show(); }
+            for(let f of flowers) f.show();
+            drawRiver();
+            for(let s of sparkles) s.update();
+            for(let b of boats) { b.update(); b.show(); }
+        }
+
+        class GrassPatch {
+            constructor() {
+                this.x = random(width); this.y = random(height);
+                this.size = random(60, 180);
+                let g = random(110, 170);
+                this.color = color(random(45, 75), g, random(35, 65), 110);
+                this.points = [];
+                let step = isMobileDevice ? 0.9 : 0.4;
+                for(let a=0; a<TWO_PI; a+=step) {
+                    let r = this.size * (0.8 + noise(this.x, this.y, a)*0.4);
+                    this.points.push(createVector(cos(a)*r, sin(a)*r));
+                }
+            }
+            show() {
+                push(); translate(this.x, this.y); noStroke(); fill(this.color);
+                beginShape();
+                for(let p of this.points) vertex(p.x, p.y);
+                endShape(CLOSE);
+                pop();
+            }
+        }
+
+        class WildGrass {
+            constructor(x, y) {
+                this.x = x; this.y = y;
+                this.height = random(14, 28);
+                this.angleOff = random(100);
+                this.color = color(random(65, 105), random(130, 190), random(50, 85), 160);
+                
+                this.leaves = [];
+                let leafCount = isMobileDevice ? floor(random(2, 4)) : floor(random(3, 6));
+                for(let i = 0; i < leafCount; i++) {
+                    this.leaves.push({
+                        hRatio: random(0.2, 0.85),
+                        side: random() > 0.5 ? 1 : -1,
+                        len: random(4, 9),
+                        angle: random(0.2, 0.7)
+                    });
+                }
+            }
+            update() {
+                this.sway = sin(frameCount * 0.035 + this.angleOff) * 5;
+            }
+            show() {
+                push(); translate(this.x, this.y);
+                stroke(this.color); fill(this.color); strokeWeight(1.2);
+                
+                let tX = this.sway;
+                let tY = -this.height;
+                let cpX = this.sway * 0.4;
+                let cpY = -this.height * 0.5;
+                
+                noFill();
+                beginShape();
+                vertex(0, 0);
+                quadraticVertex(cpX, cpY, tX, tY);
+                endShape();
+                
+                for(let leaf of this.leaves) {
+                    let t = leaf.hRatio;
+                    let leafBaseX = (1-t)*(1-t)*0 + 2*(1-t)*t*cpX + t*t*tX;
+                    let leafBaseY = (1-t)*(1-t)*0 + 2*(1-t)*t*cpY + t*t*tY;
+                    
+                    push();
+                    translate(leafBaseX, leafBaseY);
+                    let totalAngle = (leaf.angle * -leaf.side) + (this.sway * 0.02);
+                    rotate(totalAngle);
+                    line(0, 0, leaf.side * leaf.len, -leaf.len * 0.4);
+                    pop();
+                }
+                pop();
+            }
+        }
+
+        function getRiverX(y) {
+            let nY = y / height;
+            return width * 0.65 - (nY * width * 0.45) + sin(nY * PI * 1.3) * (width * 0.2);
+        }
+
+        function drawRiver() {
+            let rW = width * 0.22; noStroke();
+            let layers = isMobileDevice ? 2 : 4;
+            for(let i = layers - 1; i >= 0; i--) {
+                fill(30, 110 + i * 20, 210 + i * 12, 150);
+                beginShape();
+                for(let y = 0; y <= height; y += 30) vertex(getRiverX(y) - (rW / 2 - i * 10), y);
+                for(let y = height; y >= 0; y -= 30) vertex(getRiverX(y) + (rW / 2 - i * 10), y);
+                endShape(CLOSE);
+            }
+        }
+
+        class Flower {
+            constructor() {
+                this.x = random(width); this.y = random(height);
+                this.type = floor(random(5)); 
+                this.scale = random(0.6, 1.0);
+            }
+            show() {
+                push(); translate(this.x, this.y); scale(this.scale); noStroke();
+                if(this.type === 0) {
+                    fill(255, 255, 245); for(let i=0; i<6; i++) { rotate(PI/3); ellipse(0, 5, 3.5, 12); }
+                    fill(255, 200, 0); circle(0,0,1.5);
+                } else if(this.type === 2) {
+                    fill(70, 120, 70); rect(-0.6, 0, 1.2, 12); fill(140, 90, 230);
+                    for(let i=0; i<5; i++) { ellipse(-2, -i*2.5, 2.5, 3.5); ellipse(2, -i*2.5, 2.5, 3.5); }
+                } else if(this.type === 4) {
+                    fill(100, 180, 255); for(let i=0; i<5; i++) { rotate(TWO_PI/5); ellipse(0, 3.5, 5, 5.5); }
+                    fill(255, 240, 0); circle(0,0,2);
+                } else if(this.type === 1) {
+                    fill(120, 60, 220); for(let i=0; i<5; i++) { rotate(TWO_PI/5); circle(3.5, 0, 6); }
+                    fill(255, 255, 100); circle(0,0,1.5);
+                } else {
+                    fill(255, 130, 170); for(let i=0; i<8; i++) { rotate(PI/4); ellipse(4, 0, 9, 6); }
+                    fill(255, 230, 90); circle(0,0,2.5);
+                }
+                pop();
+            }
+        }
+
+        class Sparkle {
+            constructor() { this.reset(); }
+            reset() {
+                this.y = random(height);
+                this.x = getRiverX(this.y) + random(-width*0.07, width*0.07);
+                this.alpha = random(120, 255);
+            }
+            update() {
+                this.alpha -= 2.0; if(this.alpha <= 0) this.reset();
+                fill(255, this.alpha); noStroke(); circle(this.x, this.y, random(1, 2.5));
+            }
+        }
+
+        class Boat {
+            constructor(index, col, startProgress) {
+                this.index = index; 
+                this.color = col; 
+                this.progress = startProgress; 
+                this.speed = 0.00085; 
+                this.off = random(-35, 35);
+            }
+            update() {
+                this.progress += this.speed;
+                
+                // 當小船流出畫面底部，重新在頂部生成
+                if(this.progress > 1.1) { 
+                    // 核心防遮擋邏輯：找出目前所有正在最頂端排隊的小船中最遠（最偏上方）的位置
+                    let highestProgress = -0.35;
+                    for (let other of boats) {
+                        if (other !== this && other.progress < 0) {
+                            highestProgress = min(highestProgress, other.progress);
+                        }
+                    }
+                    // 在最上方的船之後，再強制退後 0.4 的安全緩衝間距，杜絕遮擋與重疊
+                    this.progress = highestProgress - 0.4; 
+                    this.off = random(-35, 35);
+                    
+                    let nextId = getNextCommentId();
+                    this.index = nextId;
+                    this.color = boatColors[nextId];
+                }
+                this.y = this.progress * height; 
+                this.x = getRiverX(this.y) + this.off;
+            }
+            show() {
+                if(this.y < 0 || this.y > height) return;
+                let bSize = isMobileDevice ? 0.75 : 1.0;
+                push(); translate(this.x, this.y); scale(bSize); rotate(sin(frameCount*0.025 + this.index)*0.09);
+                fill(this.color); stroke(0, 50); strokeWeight(1);
+                beginShape(); vertex(-22, 0); vertex(22, 0); vertex(14, 12); vertex(-14, 12); endShape(CLOSE);
+                fill(lerpColor(color(this.color), color(255), 0.4));
+                beginShape(); vertex(-6, 0); vertex(0, -25); vertex(12, 0); endShape(CLOSE);
+                stroke(0, 35); line(0, -25, 0, 12);
+                pop();
+            }
+            isClicked(mx, my) { 
+                let hitRadius = isMobileDevice ? 52 : 40; 
+                return dist(mx, my, this.x, this.y) < hitRadius; 
+            }
+        }
+
+        function mousePressed() {
+            for(let b of boats) { if(b.isClicked(mouseX, mouseY)) { showOldPaper(b.index); return; } }
+        }
+
+        function touchStarted() {
+            if (touches.length > 0) {
+                for(let b of boats) { if(b.isClicked(touches[0].x, touches[0].y)) { showOldPaper(b.index); return false; } }
+            }
+        }
+
+        function showOldPaper(index) {
+            const data = fullComments[index];
+            document.getElementById('comment-title').innerText = data.title;
+            document.getElementById('comment-text').innerText = data.content;
+            document.getElementById('paper-overlay').style.display = 'flex';
+        }
+
+        function closeOverlay() { document.getElementById('paper-overlay').style.display = 'none'; }
+        function windowResized() { resizeCanvas(windowWidth, windowHeight); isMobileDevice = width < 768; }
+    </script>
+</body>
+</html>
